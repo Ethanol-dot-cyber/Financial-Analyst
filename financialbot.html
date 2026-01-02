@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Financial Analyst Dashboard</title>
+<style>
+/* --- Beach Background --- */
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed; 
+    background-size: cover;
+    color: #fff; 
+    margin: 0; 
+    padding: 0; 
+}
+
+.container { 
+    width: 70%; 
+    margin: auto; 
+    padding: 30px; 
+    background: rgba(0,0,0,0.5);  /* semi-transparent overlay for readability */
+    border-radius: 15px;
+}
+
+h1 { 
+    text-align: center; 
+    margin-bottom: 40px; 
+    color: #ffd700;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+}
+
+.metric-box { 
+    background: rgba(255, 255, 255, 0.1); 
+    padding: 25px; 
+    border-radius: 15px; 
+    margin-bottom: 25px; 
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3); 
+    border-left: 6px solid #00bfff;
+}
+
+label { 
+    display: block; 
+    margin-top: 12px; 
+    font-weight: 600; 
+}
+
+input[type="number"] { 
+    width: 100%; 
+    padding: 10px; 
+    margin-top: 6px; 
+    border-radius: 8px; 
+    border: 1px solid #ccc; 
+    background: rgba(255, 255, 255, 0.2); 
+    color: #000; 
+}
+
+button { 
+    margin-top: 18px; 
+    padding: 12px 25px; 
+    border-radius: 8px; 
+    border: none; 
+    background: #ff8c00; 
+    color: white; 
+    font-weight: bold; 
+    cursor: pointer; 
+    transition: 0.3s; 
+}
+
+button:hover { 
+    background: #e07b00; 
+}
+
+.result { 
+    margin-top: 18px; 
+    background: rgba(0,0,0,0.3); 
+    padding: 18px; 
+    border-radius: 12px; 
+    text-align: center; 
+    font-size: 1.15em; 
+    line-height: 1.5em; 
+}
+
+/* --- Color-coded results --- */
+.result.low { color: #ff4d4f; }       /* Red for low */
+.result.medium { color: #ffc107; }    /* Yellow for moderate */
+.result.high { color: #28a745; }      /* Green for high */
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Financial Analyst Dashboard</h1>
+
+<!-- ROI -->
+<div class="metric-box">
+    <h2>ROI</h2>
+    <label>Revenue:</label><input type="number" id="roiRevenue" step="0.01">
+    <label>Costs:</label><input type="number" id="roiCosts" step="0.01">
+    <button onclick="calculateROI()">Calculate ROI</button>
+    <div id="ROIResult" class="result"></div>
+</div>
+
+<!-- Break-even Units -->
+<div class="metric-box">
+    <h2>Break-even Units</h2>
+    <label>Total Fixed Costs:</label><input type="number" id="beFixed" step="0.01">
+    <label>Revenue per Unit:</label><input type="number" id="beRevenue" step="0.01">
+    <label>COGS per Unit:</label><input type="number" id="beCOGS" step="0.01">
+    <button onclick="calculateBreakEven()">Calculate Break-even</button>
+    <div id="BreakEvenResult" class="result"></div>
+</div>
+
+<!-- Net Profit Margin -->
+<div class="metric-box">
+    <h2>Net Profit Margin</h2>
+    <label>Revenue:</label><input type="number" id="npmRevenue" step="0.01">
+    <label>Costs:</label><input type="number" id="npmCosts" step="0.01">
+    <button onclick="calculateNPM()">Calculate NPM</button>
+    <div id="NPMResult" class="result"></div>
+</div>
+
+<!-- ROA -->
+<div class="metric-box">
+    <h2>ROA</h2>
+    <label>Revenue:</label><input type="number" id="roaRevenue" step="0.01">
+    <label>Costs:</label><input type="number" id="roaCosts" step="0.01">
+    <label>Total Assets:</label><input type="number" id="roaAssets" step="0.01">
+    <button onclick="calculateROA()">Calculate ROA</button>
+    <div id="ROAResult" class="result"></div>
+</div>
+
+<!-- ROE -->
+<div class="metric-box">
+    <h2>ROE</h2>
+    <label>Revenue:</label><input type="number" id="roeRevenue" step="0.01">
+    <label>Costs:</label><input type="number" id="roeCosts" step="0.01">
+    <label>Equity:</label><input type="number" id="roeEquity" step="0.01">
+    <button onclick="calculateROE()">Calculate ROE</button>
+    <div id="ROEResult" class="result"></div>
+</div>
+
+<!-- EPS -->
+<div class="metric-box">
+    <h2>EPS</h2>
+    <label>Revenue:</label><input type="number" id="epsRevenue" step="0.01">
+    <label>Costs:</label><input type="number" id="epsCosts" step="0.01">
+    <label>Number of Shares:</label><input type="number" id="epsShares" step="1">
+    <button onclick="calculateEPS()">Calculate EPS</button>
+    <div id="EPSResult" class="result"></div>
+</div>
+</div>
+
+<script>
+// Helper function for color coding
+function setResultColor(element, value, thresholds) {
+    element.classList.remove('low','medium','high');
+    if(value < thresholds[0]) element.classList.add('low');
+    else if(value < thresholds[1]) element.classList.add('medium');
+    else element.classList.add('high');
+}
+
+// ---------- ROI ----------
+function calculateROI() {
+    let revenue = parseFloat(document.getElementById("roiRevenue").value) || 0;
+    let costs = parseFloat(document.getElementById("roiCosts").value) || 0;
+    let el = document.getElementById("ROIResult");
+    if(costs === 0){ el.innerText = "Costs cannot be zero!"; el.className='result low'; return; }
+    let roi = ((revenue - costs)/costs * 100).toFixed(2);
+    let explanation = roi < 0 ? 
+        "ROI is negative. This indicates losses on investments, which may reduce investor confidence. To improve ROI, reduce operational costs, optimize pricing, and invest in high-margin products. Benchmarking against competitors can highlight opportunities." :
+        roi < 50 ? 
+        "ROI is moderate. Gains exceed costs but may lag behind industry leaders. Focus on improving efficiency, optimizing pricing, and expanding profitable segments to enhance ROI." :
+        "ROI is high. Investments yield strong returns, enhancing market reputation and attracting investors. To maintain this, continue cost control, innovate products, and strategically expand high-margin areas.";
+    el.innerHTML = `<b>${roi}%</b><p>${explanation}</p>`;
+    setResultColor(el, roi, [0,50]);
+}
+
+// ---------- Break-even Units ----------
+function calculateBreakEven() {
+    let fixed = parseFloat(document.getElementById("beFixed").value) || 0;
+    let revenuePerUnit = parseFloat(document.getElementById("beRevenue").value) || 0;
+    let cogs = parseFloat(document.getElementById("beCOGS").value) || 0;
+    let el = document.getElementById("BreakEvenResult");
+    if(revenuePerUnit - cogs === 0){ el.innerText = "Revenue per unit must exceed COGS!"; el.className='result low'; return; }
+    let units = (fixed / (revenuePerUnit - cogs)).toFixed(2);
+    let explanation = units > 1000 ? 
+        "High break-even units indicate the company must sell a large quantity to cover fixed costs, increasing risk and operational pressure. Consider reducing fixed costs, optimizing pricing, or focusing on high-margin products." :
+        units > 100 ?
+        "Moderate break-even units reflect balanced costs and sales targets. Efficiency improvements and targeted marketing can reduce break-even volume." :
+        "Low break-even units indicate efficient operations and quick profitability. Maintain efficiency, optimize pricing, and monitor market demand for growth.";
+    el.innerHTML = `<b>${units}</b><p>${explanation}</p>`;
+    setResultColor(el, units, [100,1000]);
+}
+
+// ---------- Net Profit Margin ----------
+function calculateNPM() {
+    let revenue = parseFloat(document.getElementById("npmRevenue").value) || 0;
+    let costs = parseFloat(document.getElementById("npmCosts").value) || 0;
+    let el = document.getElementById("NPMResult");
+    if(revenue===0){ el.innerText = "Revenue cannot be zero!"; el.className='result low'; return; }
+    let npm = ((revenue - costs)/revenue*100).toFixed(2);
+    let explanation = npm < 10 ?
+        "Low NPM indicates only a small portion of revenue converts to profit, potentially weakening market confidence. Improve by controlling costs, renegotiating contracts, or enhancing pricing." :
+        npm < 30 ?
+        "Moderate NPM indicates fair profitability. Companies can enhance margins by efficiency improvements, product differentiation, and strategic marketing." :
+        "High NPM shows strong efficiency and profitability, attracting investors. Maintain via cost control, innovation, and focusing on profitable segments.";
+    el.innerHTML = `<b>${npm}%</b><p>${explanation}</p>`;
+    setResultColor(el, npm, [10,30]);
+}
+
+// ---------- ROA ----------
+function calculateROA() {
+    let revenue = parseFloat(document.getElementById("roaRevenue").value) || 0;
+    let costs = parseFloat(document.getElementById("roaCosts").value) || 0;
+    let assets = parseFloat(document.getElementById("roaAssets").value) || 0;
+    let el = document.getElementById("ROAResult");
+    if(assets===0){ el.innerText = "Assets cannot be zero!"; el.className='result low'; return; }
+    let roa = ((revenue-costs)/assets*100).toFixed(2);
+    let explanation = roa<5 ?
+        "Low ROA shows poor asset utilization. Improve by reallocating assets, selling underperforming assets, and investing in high-return projects." :
+        roa<15 ?
+        "Moderate ROA reflects average asset efficiency. Enhance by process optimization and strategic investment." :
+        "High ROA indicates excellent asset use, attracting investors. Maintain by monitoring performance and investing wisely.";
+    el.innerHTML = `<b>${roa}%</b><p>${explanation}</p>`;
+    setResultColor(el, roa, [5,15]);
+}
+
+// ---------- ROE ----------
+function calculateROE() {
+    let revenue = parseFloat(document.getElementById("roeRevenue").value) || 0;
+    let costs = parseFloat(document.getElementById("roeCosts").value) || 0;
+    let equity = parseFloat(document.getElementById("roeEquity").value) || 0;
+    let el = document.getElementById("ROEResult");
+    if(equity===0){ el.innerText="Equity cannot be zero!"; el.className='result low'; return; }
+    let roe = ((revenue-costs)/equity*100).toFixed(2);
+    let explanation = roe<5 ?
+        "Low ROE means shareholders receive minimal returns. Improve via cost reduction, revenue growth, or strategic capital management." :
+        roe<15 ?
+        "Moderate ROE indicates fair shareholder return. Enhance by efficiency improvements and focus on high-margin segments." :
+        "High ROE reflects strong profitability for shareholders, attracting investors. Maintain via cost control and strategic growth.";
+    el.innerHTML = `<b>${roe}%</b><p>${explanation}</p>`;
+    setResultColor(el, roe, [5,15]);
+}
+
+// ---------- EPS ----------
+function calculateEPS() {
+    let revenue = parseFloat(document.getElementById("epsRevenue").value) || 0;
+    let costs = parseFloat(document.getElementById("epsCosts").value) || 0;
+    let shares = parseFloat(document.getElementById("epsShares").value) || 1;
+    let el = document.getElementById("EPSResult");
+    if(shares===0){ el.innerText="Shares cannot be zero!"; el.className='result low'; return; }
+    let eps = ((revenue-costs)/shares).toFixed(2);
+    let explanation = eps<1 ?
+        "Low EPS shows minimal earnings per share, reducing investor appeal. Improve by increasing net income or strategic share repurchases." :
+        eps<5 ?
+        "Moderate EPS indicates reasonable earnings per share. Enhance via revenue growth and cost efficiency." :
+        "High EPS reflects strong profitability per share, boosting investor confidence and stock valuation. Maintain via revenue growth, cost control, and equity management.";
+    el.innerHTML = `<b>${eps}</b><p>${explanation}</p>`;
+    setResultColor(el, eps, [1,5]);
+}
+</script>
+</body>
+</html>
